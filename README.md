@@ -66,8 +66,8 @@ streamlit run app.py
 ```
 
 Ouvrir http://localhost:8501 : sélection d'une série (catalogue ou ID libre),
-curseurs `z`/`penalty`, analyse en un clic (explication, graphique, tableaux),
-et enrichissement optionnel par un LLM (Ollama en local ou API hébergée).
+curseurs `z`/`penalty`, analyse en un clic (explication, **graphique interactif**,
+tableaux), et enrichissement optionnel par un LLM (Ollama en local ou API hébergée).
 
 #### LLM hébergé (OpenRouter) dans l'app déployée
 
@@ -125,7 +125,7 @@ puis l'ajouter à `config/series.yaml` :
 │   ├── data.py               # client SDMX BDM (fetch + parsing XML)
 │   ├── detection.py          # STL, z-scores, segmentation binaire
 │   ├── explain.py            # explications en français (règles + LLM optionnel)
-│   └── report.py             # graphiques matplotlib + rapport Markdown + tableaux
+│   └── report.py             # graphiques (plotly interactif + matplotlib pour le rapport) + tableaux
 ├── tests/test_detection.py   # tests unitaires (unittest)
 └── reports/                  # rapports générés
 ```

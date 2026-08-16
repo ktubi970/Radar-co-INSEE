@@ -24,7 +24,7 @@ from radar_eco_insee.explain import (
     RuleBasedExplainer,
     model_options,
 )
-from radar_eco_insee.report import detections_dataframe, make_plot
+from radar_eco_insee.report import detections_dataframe, make_plotly_figure
 
 CONFIG_PATH = ROOT / "config" / "series.yaml"
 
@@ -155,7 +155,7 @@ st.markdown("### Explication")
 st.markdown(explanation)
 
 st.markdown("### Graphique")
-st.pyplot(make_plot(result))
+st.plotly_chart(make_plotly_figure(result), use_container_width=True)
 
 points_df, shifts_df = detections_dataframe(result)
 if not points_df.empty:

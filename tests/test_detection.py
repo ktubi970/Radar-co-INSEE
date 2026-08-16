@@ -7,10 +7,12 @@ from unittest import mock
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import requests
 
 from radar_eco_insee.data import SeriesData, parse_period
 from radar_eco_insee.detection import (
+    _stl_residuals,
     binary_segmentation,
     detect_anomalies,
     detect_point_anomalies,
@@ -22,7 +24,7 @@ from radar_eco_insee.explain import (
     RuleBasedExplainer,
     model_options,
 )
-from radar_eco_insee.report import detections_dataframe
+from radar_eco_insee.report import detections_dataframe, make_plotly_figure
 
 
 def make_series(values, freq="T", unit="POURCENT", title="Série test") -> SeriesData:
@@ -243,6 +245,59 @@ class TestReportDataFrames(unittest.TestCase):
         self.assertEqual(list(shifts.columns), ["Période", "Niveau avant", "Niveau après", "Direction", "Amplitude (%)"])
         self.assertEqual(list(points.columns), ["Période", "Valeur", "Attendu", "Écart (z)", "Sévérité"])
         self.assertFalse(points.empty)
+
+
+class TestStlResiduals(unittest.TestCase):
+    def test_stl_extracts_seasonal_component(self):
+        t = np.arange(160)
+        values = 10.0 + 0.8 * np.sin(t * 2 * np.pi / 4)
+        values[80:] += 4.0
+        trend, seasonal, residual = _stl_residuals(values, 4)
+        self.assertIsNotNone(seasonal)
+        self.assertEqual(len(seasonal), len(values))
+        self.assertEqual(len(trend), len(values))
+        self.assertEqual(len(residual), len(values))
+
+
+class TestPlotlyFigure(unittest.TestCase):
+    def make_result(self):
+        t = np.arange(160)
+        values = 10.0 + 0.8 * np.sin(t * 2 * np.pi / 4)
+        values[80:] += 4.0
+        values[40] += 5.0
+        series = make_series(values)
+        return detect_anomalies(series)
+
+    def test_returns_plotly_figure(self):
+        fig = make_plotly_figure(self.make_result())
+        self.assertIsInstance(fig, go.Figure)
+
+    def test_contains_series_trend_and_adjusted_traces(self):
+        fig = make_plotly_figure(self.make_result())
+        names = {t.name for t in fig.data}
+        self.assertIn("Valeurs", names)
+        self.assertIn("Tendance", names)
+        self.assertIn("Désaisonnalisée (tendance + résidu)", names)
+
+    def test_marks_anomalies(self):
+        result = self.make_result()
+        self.assertTrue(result.point_anomalies)
+        fig = make_plotly_figure(result)
+        marker_names = {t.name for t in fig.data if "markers" in str(t.mode)}
+        self.assertIn("Points anormaux", marker_names)
+
+    def test_marks_ruptures(self):
+        result = self.make_result()
+        self.assertTrue(result.level_shifts)
+        fig = make_plotly_figure(result)
+        self.assertTrue(fig.layout.shapes)
+        self.assertTrue(fig.layout.annotations)
+
+    def test_sets_title_and_axis_labels(self):
+        result = self.make_result()
+        fig = make_plotly_figure(result)
+        self.assertEqual(fig.layout.title.text, result.series.title_fr)
+        self.assertEqual(fig.layout.yaxis.title.text, result.series.unit_measure)
 
 
 if __name__ == "__main__":

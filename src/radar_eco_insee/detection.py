@@ -78,7 +78,11 @@ def _stl_residuals(values: np.ndarray, period: int) -> tuple[np.ndarray, np.ndar
             from statsmodels.tsa.seasonal import STL
 
             res = STL(values, period=period, robust=True).fit()
-            return res.trend.to_numpy(), res.seasonal.to_numpy(), res.resid.to_numpy()
+            return (
+                np.asarray(res.trend),
+                np.asarray(res.seasonal),
+                np.asarray(res.resid),
+            )
         except Exception:
             pass
 
