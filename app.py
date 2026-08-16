@@ -43,7 +43,7 @@ def llm_provider() -> str:
 
 def llm_default_model(provider: str) -> str:
     if provider == "openai":
-        return _config("OPENAI_MODEL", "google/gemini-2.0-flash-001")
+        return _config("OPENAI_MODEL", "google/gemini-3.7-flash")
     return _config("OLLAMA_MODEL", "qwen2.5:1.5b")
 
 st.set_page_config(page_title="Radar Éco INSEE", page_icon="📈", layout="wide")
@@ -136,6 +136,9 @@ else:
 rule_explainer = explainer if isinstance(explainer, RuleBasedExplainer) else RuleBasedExplainer()
 rule_text = rule_explainer.explain(result)
 explanation = explainer.explain(result, rule_text) if not isinstance(explainer, RuleBasedExplainer) else rule_text
+
+if isinstance(explainer, LLMExplainer) and explainer.last_error:
+    st.warning(f"LLM indisponible ({explainer.last_error}) — explication par règles affichée.")
 
 st.subheader(series.title_fr)
 col1, col2, col3 = st.columns(3)

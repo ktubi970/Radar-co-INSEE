@@ -87,7 +87,7 @@ class LLMExplainer:
     OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
     OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
-    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "google/gemini-2.0-flash-001")
+    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "google/gemini-3.7-flash")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
     def __init__(
@@ -108,17 +108,23 @@ class LLMExplainer:
             self.model = model or self.OLLAMA_MODEL
             self.api_key = None
         self._available: Optional[bool] = None
+        self.last_error: Optional[str] = None
 
     def is_available(self) -> bool:
         if self._available is None:
             if self.provider == "openai":
                 self._available = bool(self.api_key)
+                if not self._available:
+                    self.last_error = "Clé API manquante (OPENAI_API_KEY)."
             else:
                 try:
                     r = requests.get(f"{self.base_url}/api/tags", timeout=3)
                     self._available = r.status_code == 200
-                except requests.RequestException:
+                    if not self._available:
+                        self.last_error = f"Réponse inattendue de {self.base_url}."
+                except requests.RequestException as exc:
                     self._available = False
+                    self.last_error = f"Ollama injoignable : {exc}"
         return self._available
 
     def _chat(self, prompt: str) -> str:
@@ -173,7 +179,9 @@ class LLMExplainer:
         try:
             hypotheses = self._chat(prompt)
             if not hypotheses:
+                self.last_error = "Réponse LLM vide."
                 return rule_text
             return f"{rule_text}\n\n**Hypothèses d'explication (LLM) :**\n{hypotheses}"
-        except (requests.RequestException, KeyError, IndexError, ValueError):
+        except (requests.RequestException, KeyError, IndexError, ValueError) as exc:
+            self.last_error = str(exc)
             return rule_text

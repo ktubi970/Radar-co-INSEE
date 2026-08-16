@@ -137,6 +137,11 @@ class TestLLMExplainer(unittest.TestCase):
         self.assertFalse(explainer.is_available())
         self.assertEqual(explainer.explain(self.make_result(), "règles"), "règles")
 
+    def test_missing_key_records_error(self):
+        explainer = LLMExplainer(provider="openai", api_key="")
+        explainer.is_available()
+        self.assertIn("clé", explainer.last_error.lower())
+
     def test_openai_explain_uses_chat_completions(self):
         result = self.make_result()
         explainer = LLMExplainer(
@@ -165,6 +170,15 @@ class TestLLMExplainer(unittest.TestCase):
         ):
             out = explainer.explain(result, "règles")
         self.assertEqual(out, "règles")
+
+    def test_openai_records_error_on_failure(self):
+        result = self.make_result()
+        explainer = LLMExplainer(provider="openai", api_key="sk-test")
+        with mock.patch(
+            "radar_eco_insee.explain.requests.post", side_effect=requests.RequestException("boom")
+        ):
+            explainer.explain(result, "règles")
+        self.assertIn("boom", explainer.last_error)
 
 
 class TestReportDataFrames(unittest.TestCase):

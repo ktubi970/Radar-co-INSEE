@@ -76,9 +76,9 @@ OpenAI, ex. OpenRouter) si une clé est configurée, sinon `ollama`. En
 déploiement Streamlit Cloud, ajouter dans **Paramètres → Secrets** :
 
 ```toml
-OPENAI_API_KEY = "sk-or-..."
-OPENAI_MODEL = "google/gemini-2.0-flash-001"   # optionnel
-LLM_PROVIDER = "openai"                          # optionnel
+OPENAI_API_KEY = "sk-or-v1-..."
+OPENAI_MODEL = "google/gemini-3.7-flash"   # optionnel
+LLM_PROVIDER = "openai"                     # optionnel
 ```
 
 Localement, le fournisseur se règle par variables d'environnement
