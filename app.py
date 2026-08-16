@@ -107,15 +107,18 @@ with st.sidebar:
         catalog = OPENROUTER_MODELS if provider == "openai" else OLLAMA_MODELS
         default_model = llm_default_model(provider)
         options, default_index = model_options(provider, default_model)
-        choice = st.selectbox("Modèle", options, index=default_index, help=f"Fournisseur : {provider}")
-        llm_model = resolve_model(catalog, default_model, choice)
+        llm_model = resolve_model(
+            catalog,
+            default_model,
+            st.selectbox("Modèle", options, index=default_index, help=f"Fournisseur : {provider}"),
+        )
+        explain_llm = st.button("Expliquer avec le LLM", type="secondary", use_container_width=True)
     else:
-        llm_model = llm_default_model(provider)
+        llm_model = None
+        explain_llm = False
 
-    analyze = st.button("Analyser", type="primary", use_container_width=True)
-
-if not analyze:
-    st.info("Choisissez une série puis cliquez sur **Analyser** dans la barre latérale.")
+if not series_id:
+    st.info("Saisissez un identifiant BDM pour lancer l'analyse.")
     st.stop()
 
 with st.spinner("Récupération des données INSEE..."):
@@ -129,25 +132,29 @@ with st.spinner("Récupération des données INSEE..."):
 with st.spinner("Détection des anomalies..."):
     result = detect_anomalies(series, z_threshold=z_threshold, penalty=penalty)
 
-explainer: RuleBasedExplainer | LLMExplainer
-if use_llm:
-    explainer = LLMExplainer(
-        provider=provider,
-        model=llm_model,
-        api_key=_config("OPENAI_API_KEY"),
-    )
-    if not explainer.is_available():
-        st.warning("LLM injoignable — explication par règles utilisée à la place.")
-        explainer = RuleBasedExplainer()
-else:
-    explainer = RuleBasedExplainer()
+series_key = (series_id, round(z_threshold, 1), round(penalty, 1), llm_model)
+llm_state = st.session_state.setdefault("llm_explanation", {"key": None, "text": None})
 
-rule_explainer = explainer if isinstance(explainer, RuleBasedExplainer) else RuleBasedExplainer()
-rule_text = rule_explainer.explain(result)
-explanation = explainer.explain(result, rule_text) if not isinstance(explainer, RuleBasedExplainer) else rule_text
+rule_text = RuleBasedExplainer().explain(result)
+explanation = rule_text
+llm_used = False
 
-if isinstance(explainer, LLMExplainer) and explainer.last_error:
-    st.warning(f"LLM indisponible ({explainer.last_error}) — explication par règles affichée.")
+if use_llm and explain_llm:
+    with st.spinner("Génération de l'explication LLM..."):
+        llm_explainer = LLMExplainer(provider=provider, model=llm_model, api_key=_config("OPENAI_API_KEY"))
+        if not llm_explainer.is_available():
+            st.warning("LLM injoignable — explication par règles utilisée à la place.")
+        else:
+            llm_text = llm_explainer.explain(result, rule_text)
+            if llm_explainer.last_error:
+                st.warning(f"LLM indisponible ({llm_explainer.last_error}) — explication par règles affichée.")
+            else:
+                explanation = llm_text
+                llm_used = True
+                st.session_state["llm_explanation"] = {"key": series_key, "text": llm_text}
+elif use_llm and llm_state.get("key") == series_key and llm_state.get("text"):
+    explanation = llm_state["text"]
+    llm_used = True
 
 st.subheader(series.title_fr)
 col1, col2, col3 = st.columns(3)
@@ -156,6 +163,8 @@ col2.metric("Points anormaux", f"{len(result.point_anomalies)}")
 col3.metric("Ruptures de niveau", f"{len(result.level_shifts)}")
 
 st.markdown("### Explication")
+if llm_used:
+    st.caption(f"Explication générée avec le modèle **{llm_model}**")
 st.markdown(explanation)
 
 st.markdown("### Graphique")

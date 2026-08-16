@@ -52,8 +52,9 @@ streamlit run app.py
 ```
 
 Ouvrir http://localhost:8501 : sélection d'une série (catalogue ou ID libre),
-curseurs `z`/`penalty`, analyse en un clic (explication, **graphique interactif**,
-tableaux), et enrichissement optionnel par un LLM (Ollama en local ou API hébergée).
+curseurs `z`/`penalty` à mise à jour instantanée (explication, **graphique
+interactif**, tableaux), et enrichissement optionnel par un LLM (Ollama en
+local ou API hébergée) via le bouton **Expliquer avec le LLM**.
 
 #### LLM hébergé (OpenRouter) dans l'app déployée
 
