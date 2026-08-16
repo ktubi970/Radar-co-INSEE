@@ -84,6 +84,12 @@ LLM_PROVIDER = "openai"                     # optionnel
 Localement, le fournisseur se règle par variables d'environnement
 (`LLM_PROVIDER`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`).
 
+Dans l'app, le menu **Modèle** propose une liste de modèles OpenRouter et
+Ollama prédéfinis (voir `OPENROUTER_MODELS` et `OLLAMA_MODELS` dans
+`src/radar_eco_insee/explain.py`). Pour utiliser un modèle hors liste, le
+déclarer via la variable d'environnement / le secret `OPENAI_MODEL`
+(resp. `OLLAMA_MODEL`) : s'il n'est pas dans le menu, il est utilisé tel quel.
+
 ### Docker (app + LLM local embarqué)
 
 L'app et Ollama sont conteneurisés ensemble ; le modèle défini par

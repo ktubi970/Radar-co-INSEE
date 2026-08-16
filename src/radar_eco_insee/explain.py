@@ -17,21 +17,27 @@ import requests
 
 from .detection import DetectionResult, LevelShift, PointAnomaly
 
-CUSTOM_MODEL = "Autre (modèle personnalisé)..."
-
 OPENROUTER_MODELS = [
     "google/gemini-3.7-flash",
     "google/gemini-3.5-flash",
     "google/gemini-3.1-flash-lite",
-    "deepseek/deepseek-v3.2",
-    "meta-llama/llama-3.3-70b-instruct",
     "anthropic/claude-sonnet-5",
+    "openai/gpt-5.6-luna",
+    "x-ai/grok-4.6",
+    "deepseek/deepseek-v3.2",
+    "qwen/qwen3-max-thinking",
+    "mistralai/mistral-medium-3-5",
+    "mistralai/mistral-small-2603",
+    "meta-llama/llama-3.3-70b-instruct",
 ]
 
 OLLAMA_MODELS = [
     "qwen2.5:7b",
     "qwen2.5:1.5b",
+    "qwen3:8b",
     "llama3.2:3b",
+    "llama3.1:8b",
+    "gemma3:4b",
     "mistral:7b",
 ]
 
@@ -39,10 +45,9 @@ OLLAMA_MODELS = [
 def model_options(provider: str, current: str | None = None) -> tuple[list[str], int]:
     """Retourne (options de sélection, index par défaut) pour un fournisseur."""
     catalog = OPENROUTER_MODELS if provider == "openai" else OLLAMA_MODELS
-    options = catalog + [CUSTOM_MODEL]
     if current and current in catalog:
-        return options, catalog.index(current)
-    return options, len(options) - 1
+        return list(catalog), catalog.index(current)
+    return list(catalog), 0
 
 
 def _round(value: float, digits: int = 2) -> str:

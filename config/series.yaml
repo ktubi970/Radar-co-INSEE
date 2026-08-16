@@ -14,10 +14,38 @@ series:
     label: "Taux de chômage (moins de 25 ans, CVS)"
     description: "Taux de chômage au sens du BIT, ensemble des moins de 25 ans, France hors Mayotte, données CVS (trimestriel)."
 
+  - id: "001688527"
+    label: "Taux de chômage (ensemble, CVS)"
+    description: "Taux de chômage au sens du BIT, ensemble, France hors Mayotte, données CVS (trimestriel)."
+
+  - id: "001688529"
+    label: "Taux de chômage (25-49 ans, CVS)"
+    description: "Taux de chômage au sens du BIT, ensemble des 25 à 49 ans, France hors Mayotte, données CVS (trimestriel)."
+
+  - id: "001688531"
+    label: "Taux de chômage (50 ans et plus, CVS)"
+    description: "Taux de chômage au sens du BIT, ensemble des 50 ans ou plus, France hors Mayotte, données CVS (trimestriel)."
+
   - id: "001763865"
     label: "IPC - indice des prix à la consommation"
     description: "Indice des prix à la consommation, base 2015, ensemble des ménages, France, ensemble y compris loyers fictifs (mensuel)."
 
+  - id: "001763856"
+    label: "IPC - alimentation"
+    description: "Indice des prix à la consommation, base 2015, ensemble des ménages, alimentation y compris restaurants, cantines et cafés (mensuel)."
+
   - id: "010537946"
     label: "Production industrielle (CVS-CJO)"
     description: "Indice de la production industrielle, base 2015, industrie manufacturière NAF rév. 2 niveau A10, poste CZ (mensuel)."
+
+  - id: "010537945"
+    label: "Production industrielle (brute)"
+    description: "Indice brut de la production industrielle, base 2015, industrie manufacturière NAF rév. 2 niveau A10, poste CZ (mensuel)."
+
+  - id: "010537950"
+    label: "Production industrielle - énergie (CVS-CJO)"
+    description: "Indice CVS-CJO de la production industrielle, base 2015, industries extractives, énergie, eau, gestion des déchets et dépollution (NAF rév. 2 niveau A17, poste DE), mensuel."
+
+  - id: "001690224"
+    label: "PIB en volume (CVS-CJO)"
+    description: "Produit intérieur brut total en volume aux prix de l'année précédente chaînés, série CVS-CJO (trimestriel)."

@@ -16,7 +16,6 @@ from radar_eco_insee.detection import (
     detect_point_anomalies,
 )
 from radar_eco_insee.explain import (
-    CUSTOM_MODEL,
     OLLAMA_MODELS,
     OPENROUTER_MODELS,
     LLMExplainer,
@@ -208,15 +207,26 @@ class TestModelOptions(unittest.TestCase):
         self.assertEqual(index, 0)
         self.assertEqual(options[index], "google/gemini-3.7-flash")
 
-    def test_unknown_model_defaults_to_custom(self):
+    def test_unknown_model_defaults_to_first(self):
         options, index = model_options("openai", "foo/bar")
-        self.assertEqual(options[index], CUSTOM_MODEL)
+        self.assertEqual(index, 0)
+        self.assertEqual(options[index], OPENROUTER_MODELS[0])
 
     def test_ollama_uses_ollama_catalog(self):
         options, index = model_options("ollama", "qwen2.5:7b")
         self.assertEqual(options[index], "qwen2.5:7b")
         self.assertIn("llama3.2:3b", options)
         self.assertNotIn("deepseek/deepseek-v3.2", options)
+
+    def test_options_only_contain_catalog_models(self):
+        for provider in ("openai", "ollama"):
+            catalog = OPENROUTER_MODELS if provider == "openai" else OLLAMA_MODELS
+            options, _ = model_options(provider, None)
+            self.assertEqual(options, catalog)
+
+    def test_openrouter_catalog_covers_multiple_vendors(self):
+        vendors = {m.split("/")[0] for m in OPENROUTER_MODELS}
+        self.assertGreaterEqual(len(vendors), 4)
 
     def test_catalogs_are_non_empty(self):
         self.assertTrue(OPENROUTER_MODELS)
