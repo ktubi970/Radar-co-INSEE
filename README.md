@@ -63,7 +63,7 @@ déploiement Streamlit Cloud, ajouter dans **Paramètres → Secrets** :
 
 ```toml
 OPENAI_API_KEY = "sk-or-v1-..."
-OPENAI_MODEL = "google/gemini-3.7-flash"   # optionnel
+OPENAI_MODEL = "mistralai/mistral-medium-3-5"   # optionnel
 LLM_PROVIDER = "openai"                     # optionnel
 ```
 

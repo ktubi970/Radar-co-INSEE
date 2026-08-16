@@ -50,7 +50,7 @@ def llm_provider() -> str:
 
 def llm_default_model(provider: str) -> str:
     if provider == "openai":
-        return _config("OPENAI_MODEL", "google/gemini-3.7-flash")
+        return _config("OPENAI_MODEL", "mistralai/mistral-medium-3-5")
     return _config("OLLAMA_MODEL", "qwen2.5:1.5b")
 
 st.set_page_config(page_title="Radar Éco INSEE", page_icon="📈", layout="wide")

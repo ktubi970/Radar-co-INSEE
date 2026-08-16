@@ -18,6 +18,7 @@ import requests
 from .detection import DetectionResult, LevelShift, PointAnomaly
 
 OPENROUTER_MODELS = [
+    "mistralai/mistral-medium-3-5",
     "google/gemini-3.7-flash",
     "google/gemini-3.5-flash",
     "google/gemini-3.1-flash-lite",
@@ -26,7 +27,6 @@ OPENROUTER_MODELS = [
     "x-ai/grok-4.6",
     "deepseek/deepseek-v3.2",
     "qwen/qwen3-max-thinking",
-    "mistralai/mistral-medium-3-5",
     "mistralai/mistral-small-2603",
     "meta-llama/llama-3.3-70b-instruct",
 ]
@@ -129,7 +129,7 @@ class LLMExplainer:
     OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
     OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
-    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "google/gemini-3.7-flash")
+    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "mistralai/mistral-medium-3-5")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
     def __init__(

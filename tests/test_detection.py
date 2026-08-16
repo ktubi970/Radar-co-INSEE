@@ -206,9 +206,12 @@ class TestLLMExplainer(unittest.TestCase):
 
 class TestModelOptions(unittest.TestCase):
     def test_openai_known_model_defaults_to_it(self):
-        options, index = model_options("openai", "google/gemini-3.7-flash")
+        options, index = model_options("openai", "mistralai/mistral-medium-3-5")
         self.assertEqual(index, 0)
-        self.assertEqual(options[index], "google/gemini-3.7-flash")
+        self.assertEqual(options[index], "mistralai/mistral-medium-3-5")
+
+    def test_first_model_is_mistral_medium(self):
+        self.assertEqual(OPENROUTER_MODELS[0], "mistralai/mistral-medium-3-5")
 
     def test_unknown_model_defaults_to_first(self):
         options, index = model_options("openai", "foo/bar")
