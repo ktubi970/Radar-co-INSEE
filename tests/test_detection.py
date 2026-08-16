@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 import numpy as np
 import pandas as pd
+import requests
 
 from radar_eco_insee.data import SeriesData, parse_period
 from radar_eco_insee.detection import (
@@ -13,7 +15,7 @@ from radar_eco_insee.detection import (
     detect_anomalies,
     detect_point_anomalies,
 )
-from radar_eco_insee.explain import RuleBasedExplainer
+from radar_eco_insee.explain import LLMExplainer, RuleBasedExplainer
 from radar_eco_insee.report import detections_dataframe
 
 
@@ -117,6 +119,52 @@ class TestExplainer(unittest.TestCase):
         explainer = RuleBasedExplainer()
         text = explainer.explain(result)
         self.assertEqual(text.count("Taux de chômage test"), 1)
+
+
+class TestLLMExplainer(unittest.TestCase):
+    def make_result(self):
+        values = np.concatenate([np.full(80, 10.0), np.full(80, 14.0)])
+        values[40] += 5.0
+        series = make_series(values)
+        return detect_anomalies(series)
+
+    def test_openai_available_with_key(self):
+        explainer = LLMExplainer(provider="openai", api_key="sk-test")
+        self.assertTrue(explainer.is_available())
+
+    def test_openai_unavailable_without_key(self):
+        explainer = LLMExplainer(provider="openai", api_key="")
+        self.assertFalse(explainer.is_available())
+        self.assertEqual(explainer.explain(self.make_result(), "règles"), "règles")
+
+    def test_openai_explain_uses_chat_completions(self):
+        result = self.make_result()
+        explainer = LLMExplainer(
+            provider="openai",
+            base_url="https://example.com/api/v1",
+            api_key="sk-test",
+            model="modèle-test",
+        )
+        with mock.patch("radar_eco_insee.explain.requests.post") as mock_post:
+            resp = mock.Mock()
+            resp.raise_for_status.return_value = None
+            resp.json.return_value = {"choices": [{"message": {"content": "Hypothèse A."}}]}
+            mock_post.return_value = resp
+            out = explainer.explain(result, "règles")
+        self.assertIn("Hypothèse A.", out)
+        args, kwargs = mock_post.call_args
+        self.assertEqual(args[0], "https://example.com/api/v1/chat/completions")
+        self.assertEqual(kwargs["headers"]["Authorization"], "Bearer sk-test")
+        self.assertEqual(kwargs["json"]["model"], "modèle-test")
+
+    def test_openai_explain_falls_back_on_error(self):
+        result = self.make_result()
+        explainer = LLMExplainer(provider="openai", api_key="sk-test")
+        with mock.patch(
+            "radar_eco_insee.explain.requests.post", side_effect=requests.RequestException
+        ):
+            out = explainer.explain(result, "règles")
+        self.assertEqual(out, "règles")
 
 
 class TestReportDataFrames(unittest.TestCase):

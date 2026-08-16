@@ -6,6 +6,7 @@ Lancer :  streamlit run app.py
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -22,6 +23,28 @@ from radar_eco_insee.explain import LLMExplainer, RuleBasedExplainer
 from radar_eco_insee.report import detections_dataframe, make_plot
 
 CONFIG_PATH = ROOT / "config" / "series.yaml"
+
+
+def _config(key: str, default: str = "") -> str:
+    """Secret Streamlit avec repli sur variable d'environnement."""
+    try:
+        return str(st.secrets.get(key, os.environ.get(key, default)))
+    except Exception:
+        return os.environ.get(key, default)
+
+
+def llm_provider() -> str:
+    """Fournisseur LLM : openai si une clé est configurée, sinon ollama."""
+    provider = _config("LLM_PROVIDER", "")
+    if provider in ("openai", "ollama"):
+        return provider
+    return "openai" if _config("OPENAI_API_KEY") else "ollama"
+
+
+def llm_default_model(provider: str) -> str:
+    if provider == "openai":
+        return _config("OPENAI_MODEL", "google/gemini-2.0-flash-001")
+    return _config("OLLAMA_MODEL", "qwen2.5:1.5b")
 
 st.set_page_config(page_title="Radar Éco INSEE", page_icon="📈", layout="wide")
 
@@ -71,8 +94,14 @@ with st.sidebar:
     z_threshold = st.slider("Seuil |z| (points anormaux)", 2.0, 4.0, 2.5, 0.1)
     penalty = st.slider("Pénalité (ruptures de niveau)", 5.0, 50.0, 25.0, 1.0)
 
-    use_llm = st.checkbox("Expliquer avec un LLM local (Ollama)")
-    llm_model = st.text_input("Modèle Ollama", value="qwen2.5:1.5b", disabled=not use_llm)
+    provider = llm_provider()
+    use_llm = st.checkbox("Expliquer avec un LLM")
+    llm_model = st.text_input(
+        "Modèle",
+        value=llm_default_model(provider),
+        disabled=not use_llm,
+        help=f"Fournisseur : {provider}",
+    )
 
     analyze = st.button("Analyser", type="primary", use_container_width=True)
 
@@ -93,9 +122,13 @@ with st.spinner("Détection des anomalies..."):
 
 explainer: RuleBasedExplainer | LLMExplainer
 if use_llm:
-    explainer = LLMExplainer(model=llm_model)
+    explainer = LLMExplainer(
+        provider=provider,
+        model=llm_model,
+        api_key=_config("OPENAI_API_KEY"),
+    )
     if not explainer.is_available():
-        st.warning("Ollama injoignable — explication par règles utilisée à la place.")
+        st.warning("LLM injoignable — explication par règles utilisée à la place.")
         explainer = RuleBasedExplainer()
 else:
     explainer = RuleBasedExplainer()

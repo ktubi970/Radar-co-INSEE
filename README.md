@@ -67,7 +67,22 @@ streamlit run app.py
 
 Ouvrir http://localhost:8501 : sélection d'une série (catalogue ou ID libre),
 curseurs `z`/`penalty`, analyse en un clic (explication, graphique, tableaux),
-et enrichissement optionnel par un LLM local (Ollama).
+et enrichissement optionnel par un LLM (Ollama en local ou API hébergée).
+
+#### LLM hébergé (OpenRouter) dans l'app déployée
+
+Le fournisseur LLM est choisi automatiquement : `openai` (API compatible
+OpenAI, ex. OpenRouter) si une clé est configurée, sinon `ollama`. En
+déploiement Streamlit Cloud, ajouter dans **Paramètres → Secrets** :
+
+```toml
+OPENAI_API_KEY = "sk-or-..."
+OPENAI_MODEL = "google/gemini-2.0-flash-001"   # optionnel
+LLM_PROVIDER = "openai"                          # optionnel
+```
+
+Localement, le fournisseur se règle par variables d'environnement
+(`LLM_PROVIDER`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`).
 
 ### Docker (app + LLM local embarqué)
 

@@ -75,24 +75,77 @@ class RuleBasedExplainer:
 
 
 class LLMExplainer:
-    """Enrichit les explications avec un LLM local (Ollama), si disponible."""
+    """Enrichit les explications avec un LLM, si disponible.
 
-    DEFAULT_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-    DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
+    Deux fournisseurs :
+    - `"ollama"` (défaut) : LLM local (Ollama), endpoint `/api/generate`.
+    - `"openai"` : API compatible OpenAI (ex. OpenRouter), endpoint `/chat/completions`,
+      clé API obligatoire.
+    """
 
-    def __init__(self, base_url: str = DEFAULT_BASE_URL, model: str = DEFAULT_MODEL):
-        self.base_url = base_url.rstrip("/")
-        self.model = model
+    DEFAULT_PROVIDER = os.environ.get("LLM_PROVIDER", "ollama")
+    OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
+    OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
+    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "google/gemini-2.0-flash-001")
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+    def __init__(
+        self,
+        provider: str | None = None,
+        base_url: str | None = None,
+        model: str | None = None,
+        api_key: str | None = None,
+    ):
+        self.provider = (provider or self.DEFAULT_PROVIDER).lower()
+        if self.provider == "openai":
+            self.base_url = (base_url or self.OPENAI_BASE_URL).rstrip("/")
+            self.model = model or self.OPENAI_MODEL
+            self.api_key = api_key or self.OPENAI_API_KEY
+        else:
+            self.provider = "ollama"
+            self.base_url = (base_url or self.OLLAMA_BASE_URL).rstrip("/")
+            self.model = model or self.OLLAMA_MODEL
+            self.api_key = None
         self._available: Optional[bool] = None
 
     def is_available(self) -> bool:
         if self._available is None:
-            try:
-                r = requests.get(f"{self.base_url}/api/tags", timeout=3)
-                self._available = r.status_code == 200
-            except requests.RequestException:
-                self._available = False
+            if self.provider == "openai":
+                self._available = bool(self.api_key)
+            else:
+                try:
+                    r = requests.get(f"{self.base_url}/api/tags", timeout=3)
+                    self._available = r.status_code == 200
+                except requests.RequestException:
+                    self._available = False
         return self._available
+
+    def _chat(self, prompt: str) -> str:
+        """Interroge le modèle et retourne sa réponse (chaîne vide si vide)."""
+        if self.provider == "openai":
+            r = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": False,
+                },
+                timeout=120,
+            )
+            r.raise_for_status()
+            return r.json()["choices"][0]["message"]["content"].strip()
+        r = requests.post(
+            f"{self.base_url}/api/generate",
+            json={"model": self.model, "prompt": prompt, "stream": False},
+            timeout=120,
+        )
+        r.raise_for_status()
+        return r.json().get("response", "").strip()
 
     def explain(self, result: DetectionResult, rule_text: str) -> str:
         """Génère des hypothèses causales plausibles, sans remplacer les faits."""
@@ -118,15 +171,9 @@ class LLMExplainer:
             "Reste factuel, n'invente pas de chiffres."
         )
         try:
-            r = requests.post(
-                f"{self.base_url}/api/generate",
-                json={"model": self.model, "prompt": prompt, "stream": False},
-                timeout=120,
-            )
-            r.raise_for_status()
-            hypotheses = r.json().get("response", "").strip()
+            hypotheses = self._chat(prompt)
             if not hypotheses:
                 return rule_text
-            return f"{rule_text}\n\n**Hypothèses d'explication (LLM local) :**\n{hypotheses}"
-        except requests.RequestException:
+            return f"{rule_text}\n\n**Hypothèses d'explication (LLM) :**\n{hypotheses}"
+        except (requests.RequestException, KeyError, IndexError, ValueError):
             return rule_text

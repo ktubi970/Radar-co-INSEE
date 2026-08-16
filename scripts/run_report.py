@@ -52,9 +52,9 @@ def main() -> int:
 
     explainer: RuleBasedExplainer | LLMExplainer
     if args.llm:
-        explainer = LLMExplainer(model=args.model or LLMExplainer.DEFAULT_MODEL)
+        explainer = LLMExplainer(model=args.model or LLMExplainer.OLLAMA_MODEL)
         if not explainer.is_available():
-            print("! Ollama injoignable : utilisation de l'explication par règles.", file=sys.stderr)
+            print("! LLM injoignable : utilisation de l'explication par règles.", file=sys.stderr)
             explainer = RuleBasedExplainer()
     else:
         explainer = RuleBasedExplainer()
