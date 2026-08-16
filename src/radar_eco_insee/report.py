@@ -38,14 +38,24 @@ def make_plot(result: DetectionResult) -> plt.Figure:
 
     for a in result.point_anomalies:
         x = pd.Timestamp(a.date)
-        ax.scatter([x], [a.value], color="red", zorder=5, s=70, marker="o")
+        ax.scatter(
+            [x],
+            [a.value],
+            color="red",
+            zorder=6,
+            s=110,
+            marker="o",
+            edgecolors="black",
+            linewidths=1.0,
+        )
         ax.annotate(
             a.period,
             (x, a.value),
             textcoords="offset points",
-            xytext=(0, 8),
+            xytext=(0, 10),
             ha="center",
-            fontsize=8,
+            fontsize=9,
+            fontweight="bold",
             color="red",
         )
 
@@ -56,7 +66,10 @@ def make_plot(result: DetectionResult) -> plt.Figure:
             f"Rupture {s.period}",
             (x, ax.get_ylim()[1] * 0.9),
             textcoords="offset points",
-            xytext=(-70, 0),
+            xytext=(5, 0),
+            rotation=90,
+            ha="left",
+            va="top",
             fontsize=8,
             color="purple",
         )
