@@ -6,8 +6,6 @@
 
 defaults:
   min_points: 40          # série trop courte -> avertissement
-  z_threshold: 2.5        # seuil |z| sur les résidus STL pour un point anormal
-  penalty: 25.0           # pénalité de segmentation binaire (ruptures de niveau)
 
 series:
   - id: "001688537"

@@ -98,8 +98,8 @@ with st.sidebar:
     else:
         series_id = st.text_input("Identifiant BDM (ex. 001688537)", value="001688537").strip()
 
-    z_threshold = st.slider("Seuil |z| (points anormaux)", 2.0, 4.0, 2.5, 0.1)
-    penalty = st.slider("Pénalité (ruptures de niveau)", 5.0, 50.0, 25.0, 1.0)
+    n_points = st.slider("Points anormaux (top |z|)", 1, 20, 5, 1)
+    penalty = st.slider("Sensibilité ruptures (variance expliquée)", 0.0, 0.05, 0.004, 0.001)
 
     provider = llm_provider()
     use_llm = st.checkbox("Expliquer avec un LLM")
@@ -130,9 +130,9 @@ with st.spinner("Récupération des données INSEE..."):
     series = to_series(record)
 
 with st.spinner("Détection des anomalies..."):
-    result = detect_anomalies(series, z_threshold=z_threshold, penalty=penalty)
+    result = detect_anomalies(series, n_points=n_points, penalty=penalty)
 
-series_key = (series_id, round(z_threshold, 1), round(penalty, 1), llm_model)
+series_key = (series_id, n_points, round(penalty, 3), llm_model)
 llm_state = st.session_state.setdefault("llm_explanation", {"key": None, "text": None})
 
 rule_text = RuleBasedExplainer().explain(result)

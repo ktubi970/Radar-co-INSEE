@@ -68,9 +68,25 @@ class TestPointAnomalyDetection(unittest.TestCase):
         residual = np.zeros(100)
         residual[50] = 8.0  # écart énorme -> z élevé
         z = residual / 1.4826
-        indices = detect_point_anomalies(residual, z, z_threshold=2.5)
-        self.assertEqual(len(indices), 1)
-        self.assertEqual(indices[0][0], 50)
+        indices = detect_point_anomalies(z, n_points=1)
+        self.assertEqual([i for i, _ in indices], [50])
+
+    def test_top_n_returns_most_extreme(self):
+        rng = np.random.default_rng(3)
+        z = rng.normal(0, 1, 200)
+        z[30] = 9.0
+        z[80] = 7.0
+        z[150] = 5.0
+        indices = detect_point_anomalies(z, n_points=2)
+        self.assertEqual({i for i, _ in indices}, {30, 80})
+
+    def test_suppression_keeps_one_per_window(self):
+        z = np.zeros(100)
+        z[50] = 8.0
+        z[52] = 7.5  # trop proche du point le plus extrême -> doublon
+        z[70] = 6.0  # assez loin -> conservé
+        indices = detect_point_anomalies(z, n_points=2)
+        self.assertEqual({i for i, _ in indices}, {50, 70})
 
 
 class TestBinarySegmentation(unittest.TestCase):
@@ -78,15 +94,21 @@ class TestBinarySegmentation(unittest.TestCase):
         n = 120
         rng = np.random.default_rng(42)
         values = np.concatenate([rng.normal(10, 1, n // 2), rng.normal(14, 1, n // 2)])
-        breaks = binary_segmentation(values, min_seg=4, penalty=20.0)
-        self.assertTrue(breaks, "aucune rupture détectée")
-        self.assertEqual(breaks[0], n // 2)
+        breaks = binary_segmentation(values, min_seg=4, penalty=0.05)
+        self.assertEqual(breaks, [n // 2])
 
     def test_no_false_positive_on_flat(self):
         rng = np.random.default_rng(7)
         values = rng.normal(10, 1, 80)
-        breaks = binary_segmentation(values, min_seg=4, penalty=50.0)
+        breaks = binary_segmentation(values, min_seg=4, penalty=0.5)
         self.assertEqual(breaks, [])
+
+    def test_relative_penalty_is_scale_free(self):
+        rng = np.random.default_rng(11)
+        base = np.concatenate([rng.normal(10, 1, 60), rng.normal(13, 1, 60)])
+        b1 = binary_segmentation(base, min_seg=4, penalty=0.05)
+        b2 = binary_segmentation(base * 100, min_seg=4, penalty=0.05)
+        self.assertEqual(b1, b2)
 
 
 class TestFullDetection(unittest.TestCase):
@@ -101,7 +123,7 @@ class TestFullDetection(unittest.TestCase):
         values[40:] += 6.0  # rupture de niveau (à partir de la période 40)
 
         series = make_series(values)
-        result = detect_anomalies(series, z_threshold=2.5, penalty=20.0)
+        result = detect_anomalies(series, n_points=5, penalty=0.001)
 
         point_dates = [a.period for a in result.point_anomalies]
         self.assertIn("2030-Q1", point_dates)  # pic en indice 120 -> année 2030

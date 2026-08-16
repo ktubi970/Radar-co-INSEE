@@ -23,11 +23,13 @@ Les résultats réels collent aux grandes inflexions de l'économie française
    (`https://www.bdm.insee.fr/series/sdmx/data/SERIES_BDM/<ID>`) — sans clé.
 2. **Décomposition** STL (saison + tendance + résidu) ; repli sur une tendance
    par médiane glissante pour les séries trop courtes ou non saisonnières.
-3. **Points anormaux** : score z robuste (médiane/MAD) sur les résidus, avec
-   suppression des doublons trop proches.
-4. **Ruptures de niveau** : segmentation binaire avec coût L2 et pénalité,
-   implémentée ici en `numpy` pur (sans dépendance externe), appliquée à la
-   série désaisonnalisée.
+3. **Points anormaux** : score z robuste (médiane/MAD) sur les résidus ; les
+   `N` points les plus extrêmes (top |z|, réglable dans l'app) sont retenus,
+   avec suppression des doublons trop proches.
+4. **Ruptures de niveau** : segmentation binaire avec coût L2 et pénalité
+   exprimée en fraction de la variance totale expliquée (indépendante de
+   l'échelle, réglable dans l'app), implémentée ici en `numpy` pur (sans
+   dépendance externe), appliquée à la série désaisonnalisée.
 5. **Explication NLP** : phrases générées en français à partir des statistiques
    détectées. Enrichissement optionnel par un **LLM** (Ollama en local ou API
    hébergée type OpenRouter) qui propose des hypothèses causales, avec
@@ -52,9 +54,11 @@ streamlit run app.py
 ```
 
 Ouvrir http://localhost:8501 : sélection d'une série (catalogue ou ID libre),
-curseurs `z`/`penalty` à mise à jour instantanée (explication, **graphique
-interactif**, tableaux), et enrichissement optionnel par un LLM (Ollama en
-local ou API hébergée) via le bouton **Expliquer avec le LLM**.
+curseurs **Points anormaux** (top |z| : 1 à 20 points les plus extrêmes) et
+**Sensibilité ruptures** (fraction de variance expliquée, indépendante de
+l'échelle) à mise à jour instantanée (explication, **graphique interactif**,
+tableaux), et enrichissement optionnel par un LLM (Ollama en local ou API
+hébergée) via le bouton **Expliquer avec le LLM**.
 
 #### LLM hébergé (OpenRouter) dans l'app déployée
 

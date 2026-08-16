@@ -102,26 +102,22 @@ def _z_scores(residual: np.ndarray) -> np.ndarray:
     return (residual - center) / (spread * MAD_Z_SCALE)
 
 
-def _suppress_nearby(indices: list[int], period: int) -> list[int]:
-    """Garde le point le plus extrême parmi ceux trop proches (fenêtre d'une période)."""
-    if not indices:
-        return []
-    kept: list[int] = []
-    for idx in indices:
-        if not kept or idx - kept[-1] > max(period, 2):
-            kept.append(idx)
-    return kept
+def detect_point_anomalies(z_scores: np.ndarray, n_points: int) -> list[tuple[int, float]]:
+    """Retourne les indices (et z-scores) des `n_points` valeurs les plus extrêmes.
 
-
-def detect_point_anomalies(
-    residual: np.ndarray, z_scores: np.ndarray, z_threshold: float
-) -> list[tuple[int, float]]:
-    """Retourne les indices (et z-scores) des points anormaux, sans doublons proches."""
+    Les doublons trop proches (fenêtre ~ racine carrée du nombre d'observations)
+    sont écartés pour ne pas compter un même événement deux fois.
+    """
     z_scores = np.nan_to_num(z_scores, nan=0.0)
-    candidates = [(i, float(z_scores[i])) for i in range(len(z_scores)) if abs(z_scores[i]) > z_threshold]
-    candidates.sort(key=lambda pair: -abs(pair[1]))
-    indices = [i for i, _ in candidates]
-    return sorted((i, z_scores[i]) for i in _suppress_nearby(indices, max(2, int(np.ceil(len(z_scores) ** 0.5)))))
+    window = max(2, int(np.ceil(len(z_scores) ** 0.5)))
+    order = sorted(range(len(z_scores)), key=lambda i: -abs(z_scores[i]))
+    kept: list[int] = []
+    for idx in order:
+        if all(abs(idx - other) > window for other in kept):
+            kept.append(idx)
+        if len(kept) >= n_points:
+            break
+    return sorted((idx, float(z_scores[idx])) for idx in kept)
 
 
 # ---------------------------------------------------------------- segmentation
@@ -155,7 +151,9 @@ def _best_split(arr: np.ndarray, min_seg: int) -> tuple[float, int] | None:
 def binary_segmentation(values: np.ndarray, min_seg: int, penalty: float) -> list[int]:
     """Détecte des ruptures de niveau par segmentation binaire (coût L2 + pénalité).
 
-    Une coupe est acceptée si elle diminue le coût L2 de plus que `penalty`.
+    `penalty` est exprimé en fraction de la variance totale de la série (0..1) :
+    indépendant de l'échelle, donc comparable entre séries. Une coupe est
+    acceptée si elle explique plus de variance que `penalty`.
     Les segments sont traités par gain décroissant (résultat déterministe).
     """
     n = len(values)
@@ -163,6 +161,8 @@ def binary_segmentation(values: np.ndarray, min_seg: int, penalty: float) -> lis
         return []
 
     values = np.asarray(values, dtype=float)
+    base_cost = float(np.sum((values - np.mean(values)) ** 2))
+    threshold = penalty * base_cost if base_cost > 1e-12 else 0.0
     segments: list[tuple[int, int]] = [(0, n)]
     breaks: list[int] = []
 
@@ -176,7 +176,7 @@ def binary_segmentation(values: np.ndarray, min_seg: int, penalty: float) -> lis
             if best is None or gain > best[0]:
                 best = (gain, lo, hi, lo + rel)
 
-        if best is None or best[0] <= penalty:
+        if best is None or best[0] <= threshold:
             break
 
         gain, lo, hi, split = best
@@ -192,10 +192,14 @@ def binary_segmentation(values: np.ndarray, min_seg: int, penalty: float) -> lis
 
 def detect_anomalies(
     series: SeriesData,
-    z_threshold: float = 2.5,
-    penalty: float = 25.0,
+    n_points: int = 5,
+    penalty: float = 0.004,
 ) -> DetectionResult:
-    """Analyse complète d'une série : points anormaux + ruptures de niveau."""
+    """Analyse complète d'une série : points anormaux + ruptures de niveau.
+
+    `n_points` : nombre de points anormaux les plus extrêmes à retenir (top |z|).
+    `penalty`  : fraction de variance minimale expliquée pour accepter une rupture.
+    """
     df = series.data
     values = df["value"].to_numpy(dtype=float)
     period = series.seasonal_period
@@ -206,7 +210,7 @@ def detect_anomalies(
 
     # Points anormaux
     point_anomalies: list[PointAnomaly] = []
-    for idx, z_score in detect_point_anomalies(residual, z, z_threshold):
+    for idx, z_score in detect_point_anomalies(z, n_points):
         point_anomalies.append(
             PointAnomaly(
                 period=df["period"].iloc[idx],
