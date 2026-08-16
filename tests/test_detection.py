@@ -169,6 +169,7 @@ class TestLLMExplainer(unittest.TestCase):
         self.assertEqual(args[0], "https://example.com/api/v1/chat/completions")
         self.assertEqual(kwargs["headers"]["Authorization"], "Bearer sk-test")
         self.assertEqual(kwargs["json"]["model"], "modèle-test")
+        self.assertLessEqual(kwargs["json"]["max_tokens"], 2048)
 
     def test_openai_explain_falls_back_on_error(self):
         result = self.make_result()

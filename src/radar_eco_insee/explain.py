@@ -167,6 +167,7 @@ class LLMExplainer:
                     "model": self.model,
                     "messages": [{"role": "user", "content": prompt}],
                     "stream": False,
+                    "max_tokens": 1024,
                 },
                 timeout=120,
             )
