@@ -3,7 +3,7 @@
 Détection d'anomalies économiques dans les séries temporelles macro-économiques
 de l'INSEE (BDM) pour détecter les **points anormaux** et les **ruptures de
 niveau**, puis en produire une **explication en langage naturel** (français),
-le tout sous forme de rapport Markdown avec graphiques.
+dans une app web avec graphique interactif.
 
 Les résultats réels collent aux grandes inflexions de l'économie française
 (crise de 2009, choc COVID début 2020, poussée inflationniste 2022-2023, …).
@@ -40,24 +40,6 @@ pip install -r requirements.txt
 
 ## Utilisation
 
-### CLI
-
-```bash
-# Toutes les séries de config/series.yaml
-python scripts/run_report.py
-
-# Séries spécifiques
-python scripts/run_report.py --series 001688537 001763865
-
-# Seuil de détection personnalisé
-python scripts/run_report.py --z 3.0 --penalty 30.0
-
-# Enrichissement avec un LLM local (Ollama lancé sur localhost:11434)
-python scripts/run_report.py --llm --model qwen2.5:7b
-```
-
-Rapports générés dans `reports/<ID_BDM>/` : `rapport.md` + `plot.png`.
-
 ### App Streamlit
 
 ```bash
@@ -90,18 +72,6 @@ Ollama prédéfinis (voir `OPENROUTER_MODELS` et `OLLAMA_MODELS` dans
 déclarer via la variable d'environnement / le secret `OPENAI_MODEL`
 (resp. `OLLAMA_MODEL`) : s'il n'est pas dans le menu, il est utilisé tel quel.
 
-### Docker (app + LLM local embarqué)
-
-L'app et Ollama sont conteneurisés ensemble ; le modèle défini par
-`OLLAMA_MODEL` (défaut `qwen2.5:1.5b`) est téléchargé au démarrage.
-
-```bash
-docker compose up --build
-```
-
-- App Streamlit : http://localhost:8501
-- Ollama (API) : http://localhost:11434
-
 ### Ajouter une série
 
 Trouver un identifiant sur le [catalogue INSEE](https://catalogue-donnees.insee.fr/)
@@ -118,16 +88,12 @@ puis l'ajouter à `config/series.yaml` :
 ```
 ├── config/series.yaml        # séries par défaut + paramètres
 ├── app.py                    # app Streamlit
-├── Dockerfile                # image de l'app Streamlit
-├── docker-compose.yml        # app + service Ollama (LLM local)
-├── scripts/run_report.py     # CLI principale
 ├── src/radar_eco_insee/
 │   ├── data.py               # client SDMX BDM (fetch + parsing XML)
 │   ├── detection.py          # STL, z-scores, segmentation binaire
 │   ├── explain.py            # explications en français (règles + LLM optionnel)
-│   └── report.py             # graphiques (plotly interactif + matplotlib pour le rapport) + tableaux
-├── tests/test_detection.py   # tests unitaires (unittest)
-└── reports/                  # rapports générés
+│   └── report.py             # graphique Plotly interactif + tableaux de détection
+└── tests/test_detection.py   # tests unitaires (unittest)
 ```
 
 ## Tests
