@@ -29,8 +29,9 @@ Les résultats réels collent aux grandes inflexions de l'économie française
    implémentée ici en `numpy` pur (sans dépendance externe), appliquée à la
    série désaisonnalisée.
 5. **Explication NLP** : phrases générées en français à partir des statistiques
-   détectées. Enrichissement optionnel par un **LLM local (Ollama)** qui propose
-   des hypothèses causales, avec avertissement de vérification.
+   détectées. Enrichissement optionnel par un **LLM** (Ollama en local ou API
+   hébergée type OpenRouter) qui propose des hypothèses causales, avec
+   avertissement de vérification.
 
 ## Installation
 
@@ -40,7 +41,10 @@ pip install -r requirements.txt
 
 ## Utilisation
 
-### App Streamlit
+L'app est déployée sur **Streamlit Cloud** :
+<https://radar-co-insee-f9etuxj8r78fdbr3ubv2hy.streamlit.app/>
+
+### App Streamlit (en local)
 
 ```bash
 pip install -r requirements.txt
