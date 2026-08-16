@@ -109,6 +109,15 @@ class TestExplainer(unittest.TestCase):
         self.assertIn("Taux de chômage test", text)
         self.assertIn("rupture de niveau", text)
 
+    def test_title_appears_once(self):
+        values = np.concatenate([np.full(80, 10.0), np.full(80, 14.0)])
+        values[40] += 5.0
+        series = make_series(values, title="Taux de chômage test")
+        result = detect_anomalies(series)
+        explainer = RuleBasedExplainer()
+        text = explainer.explain(result)
+        self.assertEqual(text.count("Taux de chômage test"), 1)
+
 
 class TestReportDataFrames(unittest.TestCase):
     def test_detections_dataframe(self):

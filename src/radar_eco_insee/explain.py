@@ -32,23 +32,23 @@ def _format_period(period: str) -> str:
 class RuleBasedExplainer:
     """Génère des explications déterministes en français."""
 
-    def explain_point(self, anomaly: PointAnomaly, title: str) -> str:
+    def explain_point(self, anomaly: PointAnomaly) -> str:
         delta = anomaly.value - anomaly.expected
         sign = "supérieur" if delta >= 0 else "inférieur"
         direction = "en hausse" if delta >= 0 else "en baisse"
         txt = (
-            f"**{_format_period(anomaly.period)}** : valeur de **{_round(anomaly.value)}** "
-            f"({title}), soit un niveau {sign} de **{_round(abs(delta))}** à la tendance "
+            f"**{_format_period(anomaly.period)}** : valeur de **{_round(anomaly.value)}**, "
+            f"soit un niveau {sign} de **{_round(abs(delta))}** à la tendance "
             f"saisonnière attendue ({_round(anomaly.expected)}), un écart de "
             f"**{_round(abs(anomaly.z_score), 1)} écart(s)-type** (sévérité {anomaly.severity}). "
             f"La série est anormalement {direction} à cette période."
         )
         return txt
 
-    def explain_shift(self, shift: LevelShift, title: str) -> str:
+    def explain_shift(self, shift: LevelShift) -> str:
         verbe = "passe" if shift.direction == "hausse" else "chute"
         txt = (
-            f"**{_format_period(shift.period)}** : rupture de niveau détectée sur « {title} ». "
+            f"**{_format_period(shift.period)}** : rupture de niveau détectée. "
             f"Le niveau moyen {verbe} de **{_round(shift.mean_before)}** à "
             f"**{_round(shift.mean_after)}**, soit une {shift.direction} de "
             f"**{_round(abs(shift.magnitude_pct), 1)} %**."
@@ -62,14 +62,16 @@ class RuleBasedExplainer:
                 f"Aucune anomalie significative détectée sur « {title} » "
                 f"({result.n_obs} observations)."
             )
-        lines = []
+        lines = [f"**Série** : {title}"]
         if result.point_anomalies:
+            lines.append("")
             lines.append("**Points anormaux** (écart à la tendance saisonnière) :")
-            lines.extend(self.explain_point(a, title) for a in result.point_anomalies)
+            lines.extend(self.explain_point(a) for a in result.point_anomalies)
         if result.level_shifts:
-            lines.append("\n**Ruptures de niveau** (changement de régime) :")
-            lines.extend(self.explain_shift(s, title) for s in result.level_shifts)
-        return "\n\n".join(lines)
+            lines.append("")
+            lines.append("**Ruptures de niveau** (changement de régime) :")
+            lines.extend(self.explain_shift(s) for s in result.level_shifts)
+        return "\n".join(lines)
 
 
 class LLMExplainer:
