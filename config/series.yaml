@@ -1,0 +1,23 @@
+# Séries BDM (Banque de données macro-économiques) de l'INSEE.
+# Les identifiants sont vérifiables via l'API SDMX :
+#   https://www.bdm.insee.fr/series/sdmx/data/SERIES_BDM/<ID>
+# Pour ajouter une série, chercher son identifiant sur
+#   https://catalogue-donnees.insee.fr/ puis l'ajouter ici.
+
+defaults:
+  min_points: 40          # série trop courte -> avertissement
+  z_threshold: 2.5        # seuil |z| sur les résidus STL pour un point anormal
+  penalty: 25.0           # pénalité de segmentation binaire (ruptures de niveau)
+
+series:
+  - id: "001688537"
+    label: "Taux de chômage (moins de 25 ans, CVS)"
+    description: "Taux de chômage au sens du BIT, ensemble des moins de 25 ans, France hors Mayotte, données CVS (trimestriel)."
+
+  - id: "001763865"
+    label: "IPC - indice des prix à la consommation"
+    description: "Indice des prix à la consommation, base 2015, ensemble des ménages, France, ensemble y compris loyers fictifs (mensuel)."
+
+  - id: "010537946"
+    label: "Production industrielle (CVS-CJO)"
+    description: "Indice de la production industrielle, base 2015, industrie manufacturière NAF rév. 2 niveau A10, poste CZ (mensuel)."

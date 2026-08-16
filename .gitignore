@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+reports/
+.venv/
+ollama_data/
+.streamlit/
