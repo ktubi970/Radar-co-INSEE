@@ -19,7 +19,12 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from radar_eco_insee.data import INSEEBDMClient, SeriesData
 from radar_eco_insee.detection import detect_anomalies
-from radar_eco_insee.explain import LLMExplainer, RuleBasedExplainer
+from radar_eco_insee.explain import (
+    CUSTOM_MODEL,
+    LLMExplainer,
+    RuleBasedExplainer,
+    model_options,
+)
 from radar_eco_insee.report import detections_dataframe, make_plot
 
 CONFIG_PATH = ROOT / "config" / "series.yaml"
@@ -96,12 +101,15 @@ with st.sidebar:
 
     provider = llm_provider()
     use_llm = st.checkbox("Expliquer avec un LLM")
-    llm_model = st.text_input(
-        "Modèle",
-        value=llm_default_model(provider),
-        disabled=not use_llm,
-        help=f"Fournisseur : {provider}",
-    )
+    if use_llm:
+        options, default_index = model_options(provider, llm_default_model(provider))
+        choice = st.selectbox("Modèle", options, index=default_index, help=f"Fournisseur : {provider}")
+        if choice == CUSTOM_MODEL:
+            llm_model = st.text_input("Modèle personnalisé", value=llm_default_model(provider))
+        else:
+            llm_model = choice
+    else:
+        llm_model = llm_default_model(provider)
 
     analyze = st.button("Analyser", type="primary", use_container_width=True)
 

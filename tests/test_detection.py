@@ -15,7 +15,14 @@ from radar_eco_insee.detection import (
     detect_anomalies,
     detect_point_anomalies,
 )
-from radar_eco_insee.explain import LLMExplainer, RuleBasedExplainer
+from radar_eco_insee.explain import (
+    CUSTOM_MODEL,
+    OLLAMA_MODELS,
+    OPENROUTER_MODELS,
+    LLMExplainer,
+    RuleBasedExplainer,
+    model_options,
+)
 from radar_eco_insee.report import detections_dataframe
 
 
@@ -179,6 +186,27 @@ class TestLLMExplainer(unittest.TestCase):
         ):
             explainer.explain(result, "règles")
         self.assertIn("boom", explainer.last_error)
+
+
+class TestModelOptions(unittest.TestCase):
+    def test_openai_known_model_defaults_to_it(self):
+        options, index = model_options("openai", "google/gemini-3.7-flash")
+        self.assertEqual(index, 0)
+        self.assertEqual(options[index], "google/gemini-3.7-flash")
+
+    def test_unknown_model_defaults_to_custom(self):
+        options, index = model_options("openai", "foo/bar")
+        self.assertEqual(options[index], CUSTOM_MODEL)
+
+    def test_ollama_uses_ollama_catalog(self):
+        options, index = model_options("ollama", "qwen2.5:7b")
+        self.assertEqual(options[index], "qwen2.5:7b")
+        self.assertIn("llama3.2:3b", options)
+        self.assertNotIn("deepseek/deepseek-v3.2", options)
+
+    def test_catalogs_are_non_empty(self):
+        self.assertTrue(OPENROUTER_MODELS)
+        self.assertTrue(OLLAMA_MODELS)
 
 
 class TestReportDataFrames(unittest.TestCase):
