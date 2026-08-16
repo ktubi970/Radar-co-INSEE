@@ -159,6 +159,7 @@ class TestLLMExplainer(unittest.TestCase):
         )
         with mock.patch("radar_eco_insee.explain.requests.post") as mock_post:
             resp = mock.Mock()
+            resp.status_code = 200
             resp.raise_for_status.return_value = None
             resp.json.return_value = {"choices": [{"message": {"content": "Hypothèse A."}}]}
             mock_post.return_value = resp
@@ -186,6 +187,18 @@ class TestLLMExplainer(unittest.TestCase):
         ):
             explainer.explain(result, "règles")
         self.assertIn("boom", explainer.last_error)
+
+    def test_openai_http_error_includes_body(self):
+        result = self.make_result()
+        explainer = LLMExplainer(provider="openai", api_key="sk-test")
+        with mock.patch("radar_eco_insee.explain.requests.post") as mock_post:
+            resp = mock.Mock()
+            resp.status_code = 404
+            resp.text = '{"error": {"message": "Unknown model: foo/bar"}}'
+            mock_post.return_value = resp
+            explainer.explain(result, "règles")
+        self.assertIn("404", explainer.last_error)
+        self.assertIn("foo/bar", explainer.last_error)
 
 
 class TestModelOptions(unittest.TestCase):

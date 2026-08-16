@@ -170,7 +170,9 @@ class LLMExplainer:
                 },
                 timeout=120,
             )
-            r.raise_for_status()
+            if r.status_code != 200:
+                detail = r.text.strip().replace("\n", " ")[:300]
+                raise requests.HTTPError(f"HTTP {r.status_code} — {detail}")
             return r.json()["choices"][0]["message"]["content"].strip()
         r = requests.post(
             f"{self.base_url}/api/generate",
@@ -209,6 +211,6 @@ class LLMExplainer:
                 self.last_error = "Réponse LLM vide."
                 return rule_text
             return f"{rule_text}\n\n**Hypothèses d'explication (LLM) :**\n{hypotheses}"
-        except (requests.RequestException, KeyError, IndexError, ValueError) as exc:
+        except (requests.RequestException, KeyError, IndexError, TypeError, ValueError) as exc:
             self.last_error = str(exc)
             return rule_text
