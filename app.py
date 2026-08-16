@@ -20,9 +20,12 @@ sys.path.insert(0, str(ROOT / "src"))
 from radar_eco_insee.data import INSEEBDMClient, SeriesData
 from radar_eco_insee.detection import detect_anomalies
 from radar_eco_insee.explain import (
+    OLLAMA_MODELS,
+    OPENROUTER_MODELS,
     LLMExplainer,
     RuleBasedExplainer,
     model_options,
+    resolve_model,
 )
 from radar_eco_insee.report import detections_dataframe, make_plotly_figure
 
@@ -101,10 +104,11 @@ with st.sidebar:
     provider = llm_provider()
     use_llm = st.checkbox("Expliquer avec un LLM")
     if use_llm:
+        catalog = OPENROUTER_MODELS if provider == "openai" else OLLAMA_MODELS
         default_model = llm_default_model(provider)
         options, default_index = model_options(provider, default_model)
         choice = st.selectbox("Modèle", options, index=default_index, help=f"Fournisseur : {provider}")
-        llm_model = default_model if default_model not in options else choice
+        llm_model = resolve_model(catalog, default_model, choice)
     else:
         llm_model = llm_default_model(provider)
 

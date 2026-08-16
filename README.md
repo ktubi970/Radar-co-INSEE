@@ -72,9 +72,10 @@ Localement, le fournisseur se règle par variables d'environnement
 
 Dans l'app, le menu **Modèle** propose une liste de modèles OpenRouter et
 Ollama prédéfinis (voir `OPENROUTER_MODELS` et `OLLAMA_MODELS` dans
-`src/radar_eco_insee/explain.py`). Pour utiliser un modèle hors liste, le
-déclarer via la variable d'environnement / le secret `OPENAI_MODEL`
-(resp. `OLLAMA_MODEL`) : s'il n'est pas dans le menu, il est utilisé tel quel.
+`src/radar_eco_insee/explain.py`). Le modèle utilisé est toujours celui choisi
+dans le menu ; `OPENAI_MODEL` / `OLLAMA_MODEL` servent uniquement à
+pré-sélectionner une entrée de la liste (s'il n'y figure pas, le premier de la
+liste est utilisé).
 
 ### Ajouter une série
 

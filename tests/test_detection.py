@@ -23,6 +23,7 @@ from radar_eco_insee.explain import (
     LLMExplainer,
     RuleBasedExplainer,
     model_options,
+    resolve_model,
 )
 from radar_eco_insee.report import detections_dataframe, make_plotly_figure
 
@@ -233,6 +234,16 @@ class TestModelOptions(unittest.TestCase):
     def test_catalogs_are_non_empty(self):
         self.assertTrue(OPENROUTER_MODELS)
         self.assertTrue(OLLAMA_MODELS)
+
+    def test_configured_model_outside_catalog_does_not_override_choice(self):
+        catalog = OPENROUTER_MODELS
+        used = resolve_model(catalog, "google/gemini-2.0-flash-001", catalog[0])
+        self.assertEqual(used, catalog[0])
+
+    def test_resolve_model_returns_the_ui_choice(self):
+        catalog = OLLAMA_MODELS
+        used = resolve_model(catalog, "qwen2.5:7b", catalog[-1])
+        self.assertEqual(used, catalog[-1])
 
 
 class TestReportDataFrames(unittest.TestCase):

@@ -50,6 +50,16 @@ def model_options(provider: str, current: str | None = None) -> tuple[list[str],
     return list(catalog), 0
 
 
+def resolve_model(catalog: list[str], current: str | None, chosen: str) -> str:
+    """Modèle effectif à utiliser : toujours le choix de l'utilisateur.
+
+    Un modèle configuré (secrets / variables d'environnement) absent du
+    catalogue ne doit jamais remplacer le modèle choisi dans l'app — il ne
+    sert qu'à pré-sélectionner une entrée du catalogue via `model_options`.
+    """
+    return chosen
+
+
 def _round(value: float, digits: int = 2) -> str:
     return f"{value:.{digits}f}".replace(".", ",")
 
