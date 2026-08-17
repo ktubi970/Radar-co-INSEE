@@ -31,8 +31,8 @@ Les résultats réels collent aux grandes inflexions de l'économie française
    l'échelle, réglable dans l'app), implémentée ici en `numpy` pur (sans
    dépendance externe), appliquée à la série désaisonnalisée.
 5. **Explication NLP** : phrases générées en français à partir des statistiques
-   détectées. Enrichissement optionnel par un **LLM** (Ollama en local ou API
-   hébergée type OpenRouter) qui propose des hypothèses causales, avec
+   détectées. Enrichissement optionnel par un **LLM** (API hébergée type
+   OpenRouter) qui propose des hypothèses causales, avec
    avertissement de vérification.
 
 ## Installation
@@ -57,30 +57,23 @@ Ouvrir http://localhost:8501 : sélection d'une série (catalogue ou ID libre),
 curseurs **Points anormaux** (top |z| : 1 à 20 points les plus extrêmes) et
 **Sensibilité ruptures** (fraction de variance expliquée, indépendante de
 l'échelle) à mise à jour instantanée (explication, **graphique interactif**,
-tableaux), et enrichissement optionnel par un LLM (Ollama en local ou API
-hébergée) via le bouton **Expliquer avec le LLM**.
+tableaux), et enrichissement optionnel par un LLM (API hébergée) via le bouton **Expliquer avec le LLM**.
 
-#### LLM hébergé (OpenRouter) dans l'app déployée
+#### LLM hébergé (OpenRouter)
 
-Le fournisseur LLM est choisi automatiquement : `openai` (API compatible
-OpenAI, ex. OpenRouter) si une clé est configurée, sinon `ollama`. En
-déploiement Streamlit Cloud, ajouter dans **Paramètres → Secrets** :
+Le fournisseur LLM est `openai` (API compatible OpenRouter).
+En déploiement Streamlit Cloud, ajouter dans **Paramètres → Secrets** :
 
 ```toml
 OPENAI_API_KEY = "sk-or-v1-..."
 OPENAI_MODEL = "mistralai/mistral-medium-3-5"   # optionnel
-LLM_PROVIDER = "openai"                     # optionnel
 ```
 
-Localement, le fournisseur se règle par variables d'environnement
-(`LLM_PROVIDER`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`).
-
-Dans l'app, le menu **Modèle** propose une liste de modèles OpenRouter et
-Ollama prédéfinis (voir `OPENROUTER_MODELS` et `OLLAMA_MODELS` dans
-`src/radar_eco_insee/explain.py`). Le modèle utilisé est toujours celui choisi
-dans le menu ; `OPENAI_MODEL` / `OLLAMA_MODEL` servent uniquement à
-pré-sélectionner une entrée de la liste (s'il n'y figure pas, le premier de la
-liste est utilisé).
+Dans l'app, le menu **Modèle** propose une liste de modèles OpenRouter
+prédéfinis (voir `OPENROUTER_MODELS` dans `src/radar_eco_insee/explain.py`).
+Le modèle utilisé est toujours celui choisi dans le menu ; `OPENAI_MODEL`
+sert uniquement à pré-sélectionner une entrée de la liste (s'il n'y figure
+pas, le premier de la liste est utilisé).
 
 ### Ajouter une série
 
