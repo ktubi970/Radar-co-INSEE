@@ -118,3 +118,7 @@ PYTHONPATH=src python -m unittest discover -s tests
 - Enrichissement LLM avec récupération d'actualités (chocs exogènes expliqués).
 - Détection multi-séries croisée (corrélations, anomalies simultanées).
 - Publication des séries non arrêtées et surveillance mensuelle automatisée.
+
+---
+
+*Fait avec [OpenCode](https://opencode.ai) et Big Pickle.*
